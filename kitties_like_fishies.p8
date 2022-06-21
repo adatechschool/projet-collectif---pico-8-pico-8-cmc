@@ -2,6 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
 function _init()
+--music
+	sfx(3)
 --sprites
 --cat
 	c={
@@ -32,6 +34,7 @@ function _update()
 			c.x=newx
 			c.y=newy
 		end
+	else	sfx(4)	
 	end
 --game limits on screen
 	c.x=mid(0,120,c.x)
@@ -97,7 +100,7 @@ function create_dog()
 end
 
 function check_flag(flag,x,y)
-	local sp=mget(x,y)
+	local sp=mget(x/8,y/8)
 	return fget(sp,flag)
 end
 __gfx__
@@ -143,5 +146,5 @@ __sfx__
 000100000a5700c5700e57010570105700e5700b57009570245001a500085000650000000260001d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0014002019030160301b0301b0301e030200302003022030220301e0301e030190301b0301b0301e0301e0301e0301b0301b0301e0301b0301b0301e0301e0301e030200301e030200301e030200301e0301b030
 __music__
-03 01020344
+03 01020444
 
