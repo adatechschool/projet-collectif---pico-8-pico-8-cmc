@@ -1,47 +1,151 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
+-- main functions
+
 function _init()
 --music
 	sfx(3)
 --sprites
---cat
-	c={
-		score=0,
-		sp=2,
-		x=64,
-		y=64,
-		--speed=1
-	}
---dog
+	create_cat()
 	dogs={}
 	create_dog()
---fish and fishes
 	fishes ={}
 	create_fish()
+	--print('fish x-y: ',8,8,0)
 end
 --update
 function _update()
-	if game_over!=true then
-		newx=c.x
-		newy=c.y
-		if (btn(➡️)) newx+=2
-		if (btn(⬅️)) newx-=2
-		if (btn(⬇️)) newy+=2
-		if (btn(⬆️)) newy-=2
+ cat_movement()
+ dog_movement(dogs)
+--print score and time
+	if c.score==5 and finish_time==nil then
+		finish_time=flr(time())
+		game_over=true
+	end
+end
+--draw
+function _draw()
+	cls()
+	draw_map()
+ draw_sprites()
+--score
+	print('score: '..c.score,1,1,7)
+	print('time: '..flr(time()),40,1,7)
+--finished !
+	if game_over==true then
+		print('you win !',40,40,8)
+		print('it took you '..finish_time..' sec !',40,52)	
+	end
+end
+
+-->8
+-- functions sprites
+
+function create_cat()
+ c={
+		score=0,
+		sp=2,
+		xt=8,
+		yt=3,
+	}
+end
+
+function create_fish()
+	for i=1,1 do
+		local f={
+			sp=4,
+			xt=0,
+			yt=0,	
+		}
+		repeat 
+	 	f.xt=flr(rnd(16))
+			f.yt=flr(rnd(16))
+		until (check_flag(0,f.xt,f.yt)==false) 		
+		add(fishes,f)	
+	end
+end
+
+function create_dog()
+	for i=1,1 do
+		local d={
+			sp=1,
+			xt=flr(rnd(16)),
+			yt=flr(rnd(16)),	
+		}
+			repeat 
+	 	d.xt=flr(rnd(16))
+			d.yt=flr(rnd(16))
+		until (check_flag(0,d.xt,d.yt)==false) 		
+		add(dogs,d)	
+	end
+end
+
+function dog_movement(dogs)
+	local rn=flr(rnd(4))
+ for d in all(dogs) do
+  if not check_flag(0,d.xt,d.yt)
+  then
+			d.xt=mid(0,d.xt,15)
+			d.yt=mid(0,d.yt,15)
+			if rn==0 then d.yt-=1/2 end
+			if rn==1 then d.yt-=1/2 end
+			if rn==2 then d.xt-=1/2 end
+			if rn==3 then d.yt+=1/2 end			
+			--if rn==0 
+			--then 
+				--d.xt+=(1/2)		
+				--if check_flag(0,d.xt,d.yt)
+				--then 
+					--d.xt-=(1/2)*2
+					--if check_flag(0,d.xt,d.yt)
+					--then 
+						--d.yt-=(1/2)
+						--if check_flag(0,d.xt,d.yt)
+						--then 
+							--d.yt+=(1/2)*2
+						--end
+					--end
+				--end
+			--end
+		end								
+ end 
+end			
+			
+
+function draw_sprites()
+	spr(c.sp,c.xt*8,c.yt*8) 
+	for d in all(dogs) do
+		spr(d.sp,d.xt*8,d.yt*8)
+	end
+	for f in all(fishes) do
+		spr(f.sp,f.xt*8,f.yt*8)
+		--print('create fish x-y:'..f.xt..' - '..f.yt,8,8,0)
+		--print(check_flag(0,f.xt,f.yt),30,30,0)
+	end
+end
+
+function cat_movement()
+ if game_over!=true then
+		newx=c.xt
+		newy=c.yt
+		if (btnp(➡️)) newx+=1
+		if (btnp(⬅️)) newx-=1
+		if (btnp(⬇️)) newy+=1
+		if (btnp(⬆️)) newy-=1
 		
 		if not check_flag(0,newx,newy) then
-			c.x=newx
-			c.y=newy
-		end
-	else	sfx(4)	
-	end
---game limits on screen
-	c.x=mid(0,120,c.x)
-	c.y=mid(0,120,c.y)
---collision
-	for f in all(fishes) do
-		if f.x==c.x and f.y==c.y then
+			c.xt=mid(0,newx,15)
+			c.yt=mid(0,newy,15)
+			collision(c.xt*8,c.yt*8)
+		end					
+ else	sfx(4)
+ end
+end
+
+function collision(x,y)
+ for f in all(fishes) do
+		if f.xt*8==x and f.yt*8==y then
 			del(fishes,f)
 			sfx(2)
 			c.score+=1
@@ -49,69 +153,31 @@ function _update()
 			create_dog()
 		end
 	end
---print score and time
-	if c.score==5 and finish_time==nil then
-		finish_time=time()
-		game_over=true
-	end
 end
---draw
-function _draw()
-	cls()
-	map(0,0,0,0,16,16)
-	spr(c.sp,c.x,c.y)
-	for d in all(dogs) do
-		spr(d.sp,d.x,d.y)
-	end
-	for f in all(fishes) do
-		spr(f.sp,f.x,f.y)
-	end
---score
-	print('score : '..c.score,1,1,7)
-	print('time : '..flr(time()),40,1,7)
---finished !
-	if game_over==true then
-		print('you win !',48,48,8)
-		print('it took you'..finish_time..'seconds.')	
-	end
-end
+
 
 -->8
-function create_fish()
-	for i=1,1 do
-		local f={
-			sp=4,
-			x=flr(rnd(16))*8,
-			y=flr(rnd(16))*8,	
-		}
-		add(fishes,f)	
-	end
-end
+-- functions map
 
-function create_dog()
-		for i=1,1 do
-		local d={
-			sp=1,
-			x=flr(rnd(16))*8,
-			y=flr(rnd(16))*8,	
-		}
-		add(dogs,d)	
-	end
+function draw_map()
+ map(0,0,0,0,128,64)
 end
 
 function check_flag(flag,x,y)
-	local sp=mget(x/8,y/8)
+	local sp=mget(x,y)
 	return fget(sp,flag)
 end
+
+
 __gfx__
-0000000044bbbb4456bb6bb600700070bbbb5bbbbb3333bbbbbbbbbbbbb566bbbbbbbbbb77cccc77bbbbbbbbbbb566bbcccccccc65666656ccccccccc444444c
-00000000b444444b5bbb555500555550dbb565bbb33bb33b8b8bbbbbb6666656bb7bbbbbccccccccbbbbbbbbb6666656cbcccccccccccccccbccccccc444444c
-00700700b404404b5bbb595900595950d6b6d05bb33bb33b888bbbbb6cc56cc6b7a7bbbbcccc7cccbbbbbbbb6cc44cc6cccccbccccccccccccccccccc444444c
-00077000b440044b5b5555e50555e555dd6d6dd1b333333bb3bbbbbbccccccccbb7bbbbbccc777ccbbbbbbbbccc44cccccccccccccccccccccccccccc444444c
-00077000b44ee44b5555555500055500d6b6dd5bbb3333bbb33bbebeccccccccbbbbb9bbcc57575cbbbbbbbbccc44ccccccccbccccccccccccccccccc444444c
-00700700bb8888bb55555b5b00050500dbb565bbbbb44bbbbbbbbeeeccccccccbbbb9a9bc5555555bbbbbbbbccc44ccccccccccccccccbccccccccbcc444444c
-00000000bb4444bb555b5b5b00070700bbbb5bbbbbb44bbbbbbbbb3b566cc656bbbbb9bbbb55555bbbbbbbbb56655656cbccccccccccccccccccccccc444444c
-00000000bb4bb4bb6b6b6b6b00000000bbbbbbbbbbb44bbbbbbbb33bbb66666bbbbbbbbbbbbbbbbbbbbbbbbbbb66666bcccccccccccccccc5665655656656556
+0000000044000044560060060070007000005000bb3333bbbbbbbbbbbbb566bbbbbbbbbb77cccc77bbbbbbbbbbb566bbcccccccc65666656ccccccccc444444c
+00000000044444405000555500555550d0056500b33bb33b8b8bbbbbb6666656bb7bbbbbccccccccbbbbbbbbb6666656cbcccccccccccccccbccccccc444444c
+00700700041441405000595900595950d606d150b33bb33b888bbbbb6cc56cc6b7a7bbbbcccc7cccbbbbbbbb6cc44cc6cccccbccccccccccccccccccc444444c
+0007700004455440505555e50555e555dd6d6dd5b333333bb3bbbbbbccccccccbb7bbbbbccc777ccbbbbbbbbccc44cccccccccccccccccccccccccccc444444c
+00077000044ee4405555555500055500d606dd50bb3333bbb33bbebeccccccccbbbbb9bbcc57575cbbbbbbbbccc44ccccccccbccccccccccccccccccc444444c
+00700700008888005555505000050500d0056500bbb44bbbbbbbbeeeccccccccbbbb9a9bc5555555bbbbbbbbccc44ccccccccccccccccbccccccccbcc444444c
+0000000000444400555050500007070000005000bbb44bbbbbbbbb3b566cc656bbbbb9bbbb55555bbbbbbbbb56655656cbccccccccccccccccccccccc444444c
+0000000000400400606060600000000000000000bbb44bbbbbbbb33bbb66666bbbbbbbbbbbbbbbbbbbbbbbbbbb66666bcccccccccccccccc5665655656656556
 656666566ccccbccccccccc6656666566cccccccccccccc66cccccc6cccccccc6ccccccc66566665ccccccc66ccccbcc6ccccbccccccccc656666656cccccccc
 c444444c5ccccccccbccccc56ccccccc5cbcccccccccccc5cccccbc5ccccccbcccccccbc6ccccccc44444445544444445ccccccccccccccccbccccc5cbcccccc
 c444444c6cccccccccccccc65ccbcccc6cccccccccccccc6ccccccc6cccccccccccccccc5cbccccc44444446644444446ccccccccbcccccbccccccc6cccccbcc
