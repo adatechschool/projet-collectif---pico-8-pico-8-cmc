@@ -7,55 +7,58 @@ function _init()
 --music
 	sfx(3)
 --score
-	score=0
-	game_won=false
+	score=0	
 	game_over=false
 --sprites
 	cats={}
 	create_cat()
 	dogs={}
 	create_dog()
-	fishes={}
+	fishies={}
 	create_fish()
+--explosions
+	explosions={}
 end
---update
+
 function _update()
  cat_movement()
  dog_movement(dogs)
---score and time
-	if score==20 and finish_time==nil then
-		finish_time=flr(time())
-		game_won=true
-	end
-end
---draw
-function _draw()
-	cls()
-	draw_map()
- draw_sprites()
---print score
-	print('score: '..score,1,1,7)
---you win ! print whatever
-	if game_won==true then
-		print('you win !',20,55,0)
-		print('it took you '..finish_time..' sec !',35,68,0)	
-	else
-		print('time: '..flr(time()),40,1,7)
-	end
-	if game_over==true then
-		print('game over !',20,55,0)	
+ update_explosions()
+ if game_over==true
+	and finish_time==nil then
+		finish_time=time()
 	end
 end
 
+function _draw()
+	cls()
+	draw_map()
+	draw_explosions()
+ draw_sprites()
+--print score and time
+	print('score: '..score,1,1,7)
+
+--game over	
+	if game_over==true then
+		print('game over !',20,55,0)
+		print('it took you '..finish_time..' sec !',35,68,0)		
+	else
+		print('time: '..flr(time()),40,1,7)
+	end
+	
+end
+
 -->8
--- functions sprites
+-- functions create and draw
+-- sprites
 
 function create_cat()
  for i=1,1 do
 		local c={
 			sp=2,
 			xt=8,
-			yt=3,	
+			yt=3,
+			flip_x=true	
 		}
 		add(cats,c)	
 	end
@@ -72,7 +75,7 @@ function create_fish()
 	 	f.xt=flr(rnd(16))
 			f.yt=flr(rnd(16))
 		until (check_flag(0,f.xt,f.yt)==false) 		
-		add(fishes,f)	
+		add(fishies,f)	
 	end
 end
 
@@ -90,84 +93,25 @@ function create_dog()
 		add(dogs,d)	
 	end
 end
-
-function dog_movement(dogs)
-	for d in all(dogs) do
-	 local rn=flr(rnd(32))
-		newx=d.xt
-		newy=d.yt
-		if rn==0 then newx+=1 end
-		if rn==8 then newx-=1 end
-		if	rn==16 then newy+=1 end
-		if rn==24 then newy-=1 end
-		if (check_flag(0,newx,newy)==false  
-	 and check_flag(1,newx,newy)==false)
-			then	
-			d.xt=mid(0,newx,15)
-			d.yt=mid(0,newy,15)
-			end
-			if collision_cat_dog(d.xt*8,d.yt*8) then
-				game_over=true
-				return game_over									
- 		end
- 	
- end 
-end					
+					
 
 function draw_sprites()
 	for c in all(cats) do
-		spr(c.sp,c.xt*8,c.yt*8) 
+		spr(c.sp,c.xt*8,c.yt*8,1,1,c.flip_x) 
 	end
 	for d in all(dogs) do
 		spr(d.sp,d.xt*8,d.yt*8)
 	end
-	for f in all(fishes) do
+	for f in all(fishies) do
 		spr(f.sp,f.xt*8,f.yt*8)
 	end
 end
 
 
-function cat_movement()
-	for c in all(cats) do
-	 if game_over!=true then
-			newx=c.xt
-			newy=c.yt
-			if (btnp(➡️)) newx+=1
-			if (btnp(⬅️)) newx-=1
-			if (btnp(⬇️)) newy+=1
-			if (btnp(⬆️)) newy-=1
-			
-			if not check_flag(0,newx,newy) then
-				c.xt=mid(0,newx,15)
-				c.yt=mid(0,newy,15)
-				collision_cat_fish(c.xt*8,c.yt*8)
-			end					
-	 else sfx(4)
- 	end 
- end
-end
 
-function collision_cat_fish(x,y)
- for f in all(fishes) do
-		if f.xt*8==x and f.yt*8==y then
-			del(fishes,f)
-			sfx(2)
-			score+=1
-			create_fish()
-			create_dog()
-		end
-	end
-end
 
-function collision_cat_dog(x,y)
-	for c in all(cats) do
-		if c.xt*8==x and c.yt*8==y then
-			del(cats,c)
-			sfx(1)
-			return true
-		end
-	end
-end
+
+
 
 
 -->8
@@ -183,6 +127,109 @@ function check_flag(flag,x,y)
 end
 
 
+-->8
+--functions explosions
+
+function create_explosion(x,y)
+	add(explosions,{x=x,
+																	y=y,
+																	timer=0})
+end
+
+function update_explosions()
+	for e in all(explosions) do
+		e.timer+=1
+		if e.timer==13 then 
+			del(explosions,e)
+		end
+	end
+end
+
+function draw_explosions()
+	circ(x,y,rayon,couleur)
+	for e in all(explosions) do
+	circ(e.x,
+						e.y,
+						e.timer/3,
+						8+e.timer%3)
+	end
+end
+-->8
+-- functions sprites'movements
+
+function cat_movement()
+	for c in all(cats) do
+	 if game_over!=true then
+			newx=c.xt
+			newy=c.yt
+			if (btnp(➡️)) newx+=1
+			if (btnp(➡️)) c.flip_x=false
+			if (btnp(⬅️)) newx-=1
+			if (btnp(⬅️)) c.flip_x=true
+			if (btnp(⬇️)) newy+=1
+			if (btnp(⬆️)) newy-=1
+			
+			if not check_flag(0,newx,newy) then
+				c.xt=mid(0,newx,15)
+				c.yt=mid(0,newy,15)
+				collision_cat_fish(c.xt*8,c.yt*8)
+			end					
+	 else sfx(4)
+ 	end 
+ end
+end
+
+function dog_movement(dogs)
+	for d in all(dogs) do
+	 local rn=flr(rnd(32))
+		newx=d.xt
+		newy=d.yt
+		if rn==0 then newx+=1 end
+		if rn==8 then newx-=1 end
+		if	rn==16 then newy+=1 end
+		if rn==24 then newy-=1 end
+		for f in all(fishies) do
+			if not check_flag(0,newx,newy)
+			and (f.xt!=newx and f.yt!=newy)
+			then
+				d.xt=mid(0,newx,15)
+				d.yt=mid(0,newy,15)
+			end
+		end
+		if collision_cat_dog(d.xt*8,d.yt*8) then
+			game_over=true
+			return game_over									
+ 	end	
+ end 
+end
+			
+
+
+-->8
+-- functions collisions
+
+function collision_cat_fish(x,y)
+ for f in all(fishies) do
+		if f.xt*8==x and f.yt*8==y then
+			del(fishies,f)
+			sfx(2)
+			score+=1
+			create_fish()
+			create_dog()
+		end
+	end
+end
+
+function collision_cat_dog(x,y)
+	for c in all(cats) do
+		if c.xt*8==x and c.yt*8==y then
+			sfx(1)
+			create_explosion(x,y)
+			del(cats,c)
+			return true
+		end
+	end
+end
 __gfx__
 0000000044000044560060060070007000005000bb3333bbbbbbbbbbbbb566bbbbbbbbbb77cccc77bbbbbbbbbbb566bbcccccccc65666656ccccccccc444444c
 00000000044444405000555500555550d0056500b33bb33b8b8bbbbbb6666656bb7bbbbbccccccccbbbbbbbbb6666656cbcccccccccccccccbccccccc444444c
@@ -204,7 +251,7 @@ __gff__
 0000000002010001000100000101010000010101010101010101000001010101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
-0a0a0a0a080a0a0a0a0a0a0a0a0a0a0a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0a050a0a0a0a0a0a060a0a0a0a080a0500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 05050505050a0a0a0a0a0a060a0a050a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0a0505050a0a0a0a0a0a0a0a0a0a0a0a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -221,7 +268,7 @@ __map__
 0a0a0a080a0a0a0a1b1a0a060a0a050500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 050a0a0a0a0a0a0a11120a0a0a0a050500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-0014002019030160301b0301b0301e030200302003022030220301e0301e030190301b0301b0301e0301e0301e0301b0301b0301e0301b0301b0301e0301e0301e030200301e030200301e030200301e0301b030
+001a002019030160301b0301b0301e030200302003022030220301e0301e030190301b0301b0301e0301e0301e0301b0301b0301e0301b0301b0301e0301e0301e030200301e030200301e030200301e0301b030
 0006000036230352303423033230332302d230262301f2301a23014230102300d2300923005230002301b2001b2001b0001b0001b0001b0001b0001b0001b0001b0001b0001b2001e2001e2001e2001920020200
 000100000a5700c5700e57010570105700e5700b57009570245001a500085000650000000260001d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0014002019030160301b0301b0301e030200302003022030220301e0301e030190301b0301b0301e0301e0301e0301b0301b0301e0301b0301b0301e0301e0301e030200301e030200301e030200301e0301b030
